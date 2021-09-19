@@ -22,7 +22,7 @@
 
 ## After start program
 
-- Empty folders will be deleted
+- All empty folders will be deleted
 
 - All files located in **Sorted Files**
 
@@ -44,11 +44,13 @@
 
 - All exe files located in **Sorted Files/year created file/Exe/**
 
+## Demo
+
+![Windows Demo](https://github.com/oleh312/Sorting-files-by-extension/blob/main/assets/windows_demo.gif)
+
 # How to use
 
 ## Windows
-
-![Windows Demo](https://github.com/oleh312/Sorting-files-by-extension/blob/main/assets/windows_demo.gif)
 
 1. Keep and download file(No virus) <a  href="https://github.com/oleh312/Sorting-files-by-extension/raw/main/Go/sort_windows.exe">sort_windows.exe</a>
 
@@ -57,8 +59,6 @@
 3. Double click on file if not work <a  href="https://www.google.com/search?q=how+to+change+permissions+of+a+file+in+windows&sxsrf=ALeKk03ByQLIy_kPt0X2erLRnJHUqJrZDw%3A1628627435772&ei=6-ESYcvOLs3LrgTmwZ_oBA&oq=how+to+change+permissions+of+a+file+in+windows&gs_lcp=Cgdnd3Mtd2l6EAMyBQgAEMsBMgUIABDLATIGCAAQFhAeMgYIABAWEB4yBggAEBYQHjIGCAAQFhAeMgYIABAWEB4yBggAEBYQHjIGCAAQFhAeMgYIABAWEB46BwgAEEcQsAM6BwgAELADEENKBAhBGABQg9AbWLHZG2D73xtoAnACeACAAbIBiAHMB5IBAzAuOJgBAKABAcgBCcABAQ&sclient=gws-wiz&ved=0ahUKEwiL8J7-pafyAhXNpYsKHebgB00Q4dUDCA4&uact=5">Change file permission </a> or <a  href="https://support.microsoft.com/en-us/windows/turn-off-defender-antivirus-protection-in-windows-security-99e6004f-c54c-8509-773c-a4d776b77960">Off real time protection on windows</a>
 
 ## Linux
-
-![Linux Demo](https://github.com/oleh312/Sorting-files-by-extension/blob/main/assets/linux_demo.gif)
 
 1. Download file <a  href="https://github.com/oleh312/Sorting-files-by-extension/raw/main/Go/sort_linux">sort_linux</a>
 
