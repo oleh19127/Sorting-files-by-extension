@@ -57,23 +57,14 @@ func sorting() bool {
 					// IF FOLDER NOT EXIST CREATE
 					if _, err := os.Stat(sortedFiles); os.IsNotExist(err) {
 						os.Mkdir(sortedFiles, 0755)
-						if err != nil {
-							fmt.Println(err)
-						}
 						color.Yellow("Create " + sortedFiles + " folder")
 					}
 					if _, err := os.Stat(filepath.Join(sortedFiles, modTimeFolder)); os.IsNotExist(err) {
 						os.MkdirAll(filepath.Join(sortedFiles, modTimeFolder), 0755)
-						if err != nil {
-							fmt.Println(err)
-						}
 						color.Yellow("Create " + modTimeFolder + " folder")
 					}
 					if _, err := os.Stat(filepath.Join(sortedFiles, modTimeFolder, data.folder)); os.IsNotExist(err) {
 						os.Mkdir(filepath.Join(sortedFiles, modTimeFolder, data.folder), 0755)
-						if err != nil {
-							fmt.Println(err)
-						}
 						color.Yellow("Create " + data.folder + " folder")
 					}
 					// MOVE FILE
