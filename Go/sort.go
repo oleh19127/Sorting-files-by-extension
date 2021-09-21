@@ -120,7 +120,7 @@ func main() {
 	} else {
 		color.Cyan("NOTHING TO SORT!!!")
 	}
-	// FOR WINDOWS VERSION
+	// UNCOMMENT IF BUILD FOR WINDOWS
 	// var input string
 	// color.Cyan("PRESS ENTER TO CLOSE!!!")
 	// fmt.Scanln(&input)
