@@ -82,6 +82,6 @@
 
 5. Write in the terminal or cmd: go mod init mod && go mod tidy && go build sort.go
 
-6. You can remove file: sort.go
+6. You can remove files: sort.go, go mod, go.sum
 
 5. You can move the compiled file where you want and run it on your system
