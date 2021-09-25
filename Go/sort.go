@@ -62,9 +62,7 @@ func sorting() bool {
 				// SORTING
 				if info.Name() != "sort_windows.exe" && info.Name() != "sort.exe" && strings.ToLower(fileExtname) == extension {
 					// CALCULATE FILES
-					if !info.IsDir() {
-						files = files + 1
-					}
+					files = files + 1
 					// GET MODIFICATION FILE TIME
 					modTimeFolder := info.ModTime().Format("2006")
 					// IF FOLDERS NOT EXIST CREATE
@@ -72,7 +70,7 @@ func sorting() bool {
 						os.Mkdir(sortedFiles, 0755)
 					}
 					if _, err := os.Stat(filepath.Join(sortedFiles, modTimeFolder)); os.IsNotExist(err) {
-						os.MkdirAll(filepath.Join(sortedFiles, modTimeFolder), 0755)
+						os.Mkdir(filepath.Join(sortedFiles, modTimeFolder), 0755)
 					}
 					if _, err := os.Stat(filepath.Join(sortedFiles, modTimeFolder, data.folder)); os.IsNotExist(err) {
 						os.Mkdir(filepath.Join(sortedFiles, modTimeFolder, data.folder), 0755)
@@ -80,13 +78,24 @@ func sorting() bool {
 					// MOVE FILE
 					os.Rename(path, filepath.Join(sortedFiles, modTimeFolder, data.folder, info.Name()))
 					fileToSortExists = true
+
 				}
 			}
 		}
+
 		return nil
 	})
 	if err != nil {
 		fmt.Println(err)
+	}
+	// PROGRESSBAR
+	if files > 0 {
+		fmt.Println("SORTING!!!")
+		bar := progressbar.Default(files)
+		for i := files; i > 0; i-- {
+			bar.Add(1)
+			time.Sleep(time.Millisecond)
+		}
 	}
 	return fileToSortExists
 }
@@ -107,12 +116,6 @@ func removeDir(path string, info os.FileInfo) {
 
 func main() {
 	if sorting() {
-		fmt.Println("SORTING!!!")
-		bar := progressbar.Default(files)
-		for i := files; i > 0; i-- {
-			bar.Add(1)
-			time.Sleep(2 * time.Millisecond)
-		}
 		if folders-1 > 0 {
 			for i := 0; i < folders-1; i++ {
 				err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
