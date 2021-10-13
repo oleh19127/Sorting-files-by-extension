@@ -224,7 +224,7 @@ func archiveSortedFilesFolder() {
 
 func main() {
 	scanFolders()
-	defer archiveSortedFilesFolder()
+	archiveSortedFilesFolder()
 	// UNCOMMENT IF BUILD FOR WINDOWS
 	// var closeInput string
 	// color.White("PRESS ENTER TO CLOSE!!!")
