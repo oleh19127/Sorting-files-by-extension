@@ -22,8 +22,6 @@
 
 ## After start program
 
-- All empty folders will be deleted
-
 - All files located in **Sorted Files**
 
 - All images files located in **Sorted Files/year created file/Images/**
@@ -44,6 +42,10 @@
 
 - All exe files located in **Sorted Files/year created file/Exe/**
 
+- All empty folders will be deleted
+
+- Possible to archive the sorted files
+
 ## Demo
 
 ![Windows Demo](https://github.com/oleh312/Sorting-files-by-extension/blob/main/assets/windows_demo.gif)
@@ -52,7 +54,7 @@
 
 ## Windows
 
-1. Keep and download file(No virus) <a  href="https://github.com/oleh312/Sorting-files-by-extension/releases/download/v1.1/sort_windows.exe">sort_windows.exe</a>
+1. Keep and download file(No virus) <a  href="https://github.com/oleh312/Sorting-files-by-extension/releases/download/v1.3/sort_windows.exe">sort_windows.exe</a>
 
 2. Place the program file in the folder with the files you want to sort
 
@@ -60,7 +62,7 @@
 
 ## Linux
 
-1. Download file <a  href="https://github.com/oleh312/Sorting-files-by-extension/releases/download/v1.1/sort_linux">sort_linux</a>
+1. Download file <a  href="https://github.com/oleh312/Sorting-files-by-extension/releases/download/v1.3/sort_linux">sort_linux</a>
 
 2. Place the program file in the folder with the files you want to sort
 
