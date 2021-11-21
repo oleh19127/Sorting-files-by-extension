@@ -9,9 +9,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-
-	"github.com/fatih/color"
-	"github.com/leaanthony/spinner"
 )
 
 type Data struct {
@@ -19,75 +16,59 @@ type Data struct {
 }
 
 var (
-	// STRUCTURE OF TYPES
+	// Structure
 	allData = []Data{
-		{"Images", "png jpg webp svg gif ico jpeg bmp esp jpeg 2000 heif bat cgm tif tiff eps raw cr2 nef orf sr2"},
-		{"Videos", "mp4 mov wmv fly avi mkv flv mpg webm oog m4p m4v qt swf avchd f4v mpeg-2"},
-		{"Music", "mp3 aac flac alac wav aiff dsd pcm m4a wma"},
-		{"Documents", "txt doc docx docx odt xls xlsx ppt pptx"},
+		{"Images", "png, jpg, webp, svg, gif, ico, jpeg, bmp, esp, jpeg 2000, heif, bat, cgm, tif, tiff, eps, raw, cr2, nef, orf, sr2"},
+		{"Videos", "mp4, mov, wmv, fly, avi, mkv, flv, mpg, webm, oog, m4p, m4v, qt, swf, avchd, f4v, mpeg-2"},
+		{"Music", "mp3, aac, flac, alac, wav, aiff, dsd, pcm, m4a, wma"},
+		{"Documents", "txt, doc, docx, docx, odt, xls, xlsx, ppt, pptx"},
 		{"Psd", "psd"},
 		{"pdf", "pdf"},
-		{"Archive", "zip rar 7z tar"},
+		{"Archive", "zip, rar, 7z, tar"},
 		{"Exe", "exe"},
 		{"Torrent", "torrent"},
 	}
-	// ALL FOLDERS
-	folders int
 )
 
-// SORTED FILES FOLDER
+// Sorted files folder
 const sortedFilesFolder = "Sorted Files"
 
-func sortedFilesFolderExist() bool {
-	files, err := ioutil.ReadDir(".")
-	if err != nil {
-		panic(err)
-	}
-	for _, file := range files {
-		if file.Name() == sortedFilesFolder && file.IsDir() {
-			return true
-		}
-	}
-	return false
-}
-
-func sorting() bool {
-	// IF FILE TO SORT EXIST = true
+func sorting() (bool, int) {
 	var fileToSortExists bool
-	// CHECK ALL PATH
+	var calcFolders int
+	// Check path
 	err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() && info.Name() == sortedFilesFolder {
 			return filepath.SkipDir
 		}
-		// CALCULATE FOLDERS
-		if info.IsDir() {
-			folders = folders + 1
+		// Calculate folders
+		if info.IsDir() && path != "." {
+			calcFolders = calcFolders + 1
 		}
-		// CHECK FILES
+		// Check files
 		for _, data := range allData {
-			extensions := strings.Split(data.extension, " ")
+			extensions := strings.Split(data.extension, ", ")
 			for _, extension := range extensions {
 				fileExtname := strings.Trim(filepath.Ext(info.Name()), ".")
-				// SORTING
-				if info.Name() != "sort_windows.exe" && info.Name() != sortedFilesFolder+".zip" && info.Name() != "sort.exe" && strings.ToLower(fileExtname) == extension {
-					// GET MODIFICATION FILE TIME
+				if info.Name() != "sort_windows.exe" && info.Name() != sortedFilesFolder+".zip" && info.Name() != "sort.exe" && strings.ToLower(fileExtname) == strings.ToLower(extension) {
+					// Get modification file time
 					modTimeFolder := strconv.Itoa(info.ModTime().Year())
-					// IF FOLDERS NOT EXIST CREATE
+					// If folders not exist create
 					if _, err := os.Stat(sortedFilesFolder); os.IsNotExist(err) {
 						os.Mkdir(sortedFilesFolder, 0755)
-						color.Yellow("Create " + sortedFilesFolder + " folder")
+						fmt.Println("Create", sortedFilesFolder, "folder")
 					}
 					if _, err := os.Stat(filepath.Join(sortedFilesFolder, modTimeFolder)); os.IsNotExist(err) {
 						os.Mkdir(filepath.Join(sortedFilesFolder, modTimeFolder), 0755)
-						color.Yellow("Create " + sortedFilesFolder + "/" + modTimeFolder + " folder")
+						fmt.Println("Create", filepath.Join(sortedFilesFolder, modTimeFolder), "folder")
 					}
 					if _, err := os.Stat(filepath.Join(sortedFilesFolder, modTimeFolder, data.folder)); os.IsNotExist(err) {
 						os.Mkdir(filepath.Join(sortedFilesFolder, modTimeFolder, data.folder), 0755)
-						color.Yellow("Create " + sortedFilesFolder + "/" + modTimeFolder + "/" + data.folder + " folder")
+						fmt.Println("Create", filepath.Join(sortedFilesFolder, modTimeFolder, data.folder), "folder")
 					}
-					// MOVE FILE
+					// Move file
 					os.Rename(path, filepath.Join(sortedFilesFolder, modTimeFolder, data.folder, info.Name()))
-					color.Green(path + " moved >> " + filepath.Join(sortedFilesFolder, modTimeFolder, data.folder, info.Name()))
+					fmt.Println(path, ">>", filepath.Join(sortedFilesFolder, modTimeFolder, data.folder, info.Name()))
 					fileToSortExists = true
 				}
 			}
@@ -97,7 +78,7 @@ func sorting() bool {
 	if err != nil {
 		fmt.Println(err)
 	}
-	return fileToSortExists
+	return fileToSortExists, calcFolders
 }
 
 func removeDir(path string, info os.FileInfo) {
@@ -115,11 +96,11 @@ func removeDir(path string, info os.FileInfo) {
 }
 
 func scanFolders() {
-	if sorting() {
-		if folders-1 > 0 {
-			removeFoldersSpinner := spinner.New("CHECK FOLDERS!!!")
-			removeFoldersSpinner.Start()
-			for i := 0; i < folders-1; i++ {
+	filesExist, folders := sorting()
+	if filesExist {
+		if folders > 0 {
+			fmt.Println("Checking folders...")
+			for i := 0; i < folders; i++ {
 				err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 					if info.IsDir() {
 						removeDir(path, info)
@@ -130,16 +111,15 @@ func scanFolders() {
 					fmt.Println(err)
 				}
 			}
-			removeFoldersSpinner.Success("EMPTY FOLDERS DELETED!!!")
+			fmt.Println("Empty folders deleted!")
 		}
 	} else {
-		color.Cyan("NOTHING TO SORT!!!")
+		fmt.Println("Nothing to sort!")
 	}
 }
 
 func zipIt(source, target string, needBaseDir bool) error {
-	zipSpinner := spinner.New("ADD FILES TO ARCHIVE...")
-	zipSpinner.Start()
+	fmt.Println("Add files to archive...")
 	zipfile, err := os.Create(target)
 	if err != nil {
 		return err
@@ -207,17 +187,19 @@ func zipIt(source, target string, needBaseDir bool) error {
 		_, err = io.Copy(writer, file)
 		return err
 	})
-	zipSpinner.Success("DONE!!!")
+
+	fmt.Println("Done!")
 	return err
 }
 
 func archiveSortedFilesFolder() {
-	if sortedFilesFolderExist() {
+	if _, err := os.Stat(sortedFilesFolder); !os.IsNotExist(err) {
 		var archiveInput string
-		color.HiBlue("WANT ARCHIVE FILES? (yes/no)")
+		fmt.Println("Want archive files? (yes/no)")
 		fmt.Scanln(&archiveInput)
 		if strings.ToLower(archiveInput) == "yes" || strings.ToLower(archiveInput) == "y" {
 			zipIt(sortedFilesFolder, sortedFilesFolder+".zip", false)
+			os.RemoveAll(sortedFilesFolder)
 		}
 	}
 }
@@ -225,46 +207,8 @@ func archiveSortedFilesFolder() {
 func main() {
 	scanFolders()
 	archiveSortedFilesFolder()
-	// UNCOMMENT IF BUILD FOR WINDOWS
+	// Uncomment if build for windows
 	// var closeInput string
-	// color.White("PRESS ENTER TO CLOSE!!!")
+	// fmt.Println("Press enter to close!!!")
 	// fmt.Scanln(&closeInput)
 }
-
-// func unzip(archive, target string) error {
-// 	reader, err := zip.OpenReader(archive)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer reader.Close()
-
-// 	if err := os.MkdirAll(target, 0755); err != nil {
-// 		return err
-// 	}
-
-// 	for _, file := range reader.File {
-// 		path := filepath.Join(target, file.Name)
-// 		if file.FileInfo().IsDir() {
-// 			os.MkdirAll(path, file.Mode())
-// 			continue
-// 		}
-
-// 		fileReader, err := file.Open()
-// 		if err != nil {
-// 			return err
-// 		}
-// 		defer fileReader.Close()
-
-// 		targetFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
-// 		if err != nil {
-// 			return err
-// 		}
-// 		defer targetFile.Close()
-
-// 		if _, err := io.Copy(targetFile, fileReader); err != nil {
-// 			return err
-// 		}
-// 	}
-
-// 	return nil
-// }
