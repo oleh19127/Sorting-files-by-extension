@@ -9,6 +9,10 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/mochi-co/autonamer"
+	"github.com/theckman/yacspin"
 )
 
 type Data struct {
@@ -34,6 +38,19 @@ var (
 const sortedFilesFolder = "Sorted Files"
 
 func sorting() (bool, int) {
+
+	sortingSpinnerCfg := yacspin.Config{
+		Frequency:       100 * time.Millisecond,
+		CharSet:         yacspin.CharSets[59],
+		Suffix:          " Sorting",
+		SuffixAutoColon: true,
+		Message:         "files",
+		StopCharacter:   "✓",
+		StopColors:      []string{"fgGreen"},
+	}
+	spinner, _ := yacspin.New(sortingSpinnerCfg)
+	spinner.Start()
+
 	var fileToSortExists bool
 	var calcFolders int
 	// Check path
@@ -56,19 +73,21 @@ func sorting() (bool, int) {
 					// If folders not exist create
 					if _, err := os.Stat(sortedFilesFolder); os.IsNotExist(err) {
 						os.Mkdir(sortedFilesFolder, 0755)
-						fmt.Println("Create", sortedFilesFolder, "folder")
 					}
 					if _, err := os.Stat(filepath.Join(sortedFilesFolder, modTimeFolder)); os.IsNotExist(err) {
 						os.Mkdir(filepath.Join(sortedFilesFolder, modTimeFolder), 0755)
-						fmt.Println("Create", filepath.Join(sortedFilesFolder, modTimeFolder), "folder")
 					}
 					if _, err := os.Stat(filepath.Join(sortedFilesFolder, modTimeFolder, data.folder)); os.IsNotExist(err) {
 						os.Mkdir(filepath.Join(sortedFilesFolder, modTimeFolder, data.folder), 0755)
-						fmt.Println("Create", filepath.Join(sortedFilesFolder, modTimeFolder, data.folder), "folder")
+					}
+					newPath, err := autonamer.Pick(1000, filepath.Join(sortedFilesFolder, modTimeFolder, data.folder, info.Name()))
+					if err != nil {
+						fmt.Println(err)
 					}
 					// Move file
-					os.Rename(path, filepath.Join(sortedFilesFolder, modTimeFolder, data.folder, info.Name()))
-					fmt.Println(path, ">>", filepath.Join(sortedFilesFolder, modTimeFolder, data.folder, info.Name()))
+					os.Rename(path, newPath)
+					// Update spinner
+					spinner.Message(info.Name())
 					fileToSortExists = true
 				}
 			}
@@ -78,6 +97,8 @@ func sorting() (bool, int) {
 	if err != nil {
 		fmt.Println(err)
 	}
+	// Stop spinner
+	spinner.Stop()
 	return fileToSortExists, calcFolders
 }
 
@@ -99,7 +120,19 @@ func scanFolders() {
 	filesExist, folders := sorting()
 	if filesExist {
 		if folders > 0 {
-			fmt.Println("Checking folders...")
+
+			deleteEmptyFoldersSpinnerCfg := yacspin.Config{
+				Frequency:       100 * time.Millisecond,
+				CharSet:         yacspin.CharSets[59],
+				Suffix:          " Delete empty folders",
+				SuffixAutoColon: true,
+				Message:         "files",
+				StopCharacter:   "✓",
+				StopColors:      []string{"fgGreen"},
+			}
+			spinner, _ := yacspin.New(deleteEmptyFoldersSpinnerCfg)
+			spinner.Start()
+
 			for i := 0; i < folders; i++ {
 				err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 					if info.IsDir() {
@@ -111,15 +144,27 @@ func scanFolders() {
 					fmt.Println(err)
 				}
 			}
-			fmt.Println("Empty folders deleted!")
+
+			time.Sleep(500 * time.Millisecond)
+			spinner.Stop()
+
 		}
-	} else {
-		fmt.Println("Nothing to sort!")
 	}
 }
 
 func zipIt(source, target string, needBaseDir bool) error {
-	fmt.Println("Add files to archive...")
+
+	archiveSpinnerCfg := yacspin.Config{
+		Frequency:       100 * time.Millisecond,
+		CharSet:         yacspin.CharSets[11],
+		Suffix:          " Add files to archive",
+		SuffixAutoColon: true,
+		StopCharacter:   "✓",
+		StopColors:      []string{"fgGreen"},
+	}
+	spinner, _ := yacspin.New(archiveSpinnerCfg)
+	spinner.Start()
+
 	zipfile, err := os.Create(target)
 	if err != nil {
 		return err
@@ -188,7 +233,8 @@ func zipIt(source, target string, needBaseDir bool) error {
 		return err
 	})
 
-	fmt.Println("Done!")
+	spinner.Stop()
+
 	return err
 }
 
@@ -205,8 +251,14 @@ func archiveSortedFilesFolder() {
 }
 
 func main() {
+	start := time.Now()
+
 	scanFolders()
 	archiveSortedFilesFolder()
+
+	duration := time.Since(start)
+	fmt.Println("Work time:", duration.Round(time.Millisecond))
+	
 	// Uncomment if build for windows
 	// var closeInput string
 	// fmt.Println("Press enter to close!!!")
