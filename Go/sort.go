@@ -67,7 +67,7 @@ func sorting() (bool, int) {
 			extensions := strings.Split(data.extension, ", ")
 			for _, extension := range extensions {
 				fileExtname := strings.Trim(filepath.Ext(info.Name()), ".")
-				if info.Name() != "sort_windows.exe" && info.Name() != sortedFilesFolder+".zip" && info.Name() != "sort.exe" && strings.ToLower(fileExtname) == strings.ToLower(extension) {
+				if !strings.HasPrefix(info.Name(), "sort") && !strings.HasPrefix(info.Name(), sortedFilesFolder) && strings.ToLower(fileExtname) == strings.ToLower(extension) {
 					// Get modification file time
 					modTimeFolder := strconv.Itoa(info.ModTime().Year())
 					// If folders not exist create
@@ -244,7 +244,11 @@ func archiveSortedFilesFolder() {
 		fmt.Println("Want archive files? (yes/no)")
 		fmt.Scanln(&archiveInput)
 		if strings.ToLower(archiveInput) == "yes" || strings.ToLower(archiveInput) == "y" {
-			zipIt(sortedFilesFolder, sortedFilesFolder+".zip", false)
+			newPath, err := autonamer.Pick(1000, sortedFilesFolder+".zip")
+			if err != nil {
+				fmt.Println(err)
+			}
+			zipIt(sortedFilesFolder, newPath, false)
 			os.RemoveAll(sortedFilesFolder)
 		}
 	}
@@ -258,7 +262,7 @@ func main() {
 
 	duration := time.Since(start)
 	fmt.Println("Work time:", duration.Round(time.Millisecond))
-	
+
 	// Uncomment if build for windows
 	// var closeInput string
 	// fmt.Println("Press enter to close!!!")
