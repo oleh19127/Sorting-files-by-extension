@@ -11,46 +11,62 @@ import (
 	"strings"
 	"time"
 
+	"github.com/leaanthony/spinner"
 	"github.com/mochi-co/autonamer"
-	"github.com/theckman/yacspin"
 )
 
 type Data struct {
-	folder, extension string
+	folder     string
+	extensions []string
 }
 
 var (
 	// Structure
-	allData = []Data{
-		{"Images", "png, jpg, webp, svg, gif, ico, jpeg, bmp, esp, jpeg 2000, heif, bat, cgm, tif, tiff, eps, raw, cr2, nef, orf, sr2"},
-		{"Videos", "mp4, mov, wmv, fly, avi, mkv, flv, mpg, webm, oog, m4p, m4v, qt, swf, avchd, f4v, mpeg-2"},
-		{"Music", "mp3, aac, flac, alac, wav, aiff, dsd, pcm, m4a, wma"},
-		{"Documents", "txt, doc, docx, docx, odt, xls, xlsx, ppt, pptx"},
-		{"Psd", "psd"},
-		{"pdf", "pdf"},
-		{"Archive", "zip, rar, 7z, tar"},
-		{"Exe", "exe"},
-		{"Torrent", "torrent"},
+	images = Data{
+		folder:     "Images",
+		extensions: []string{"png", "jpg", "webp", "svg", "gif", "ico", "jpeg", "bmp", "esp", "jpeg 2000", "heif", "bat", "cgm", "tif", "tiff", "eps", "raw", "cr2", "nef", "orf", "sr2"},
 	}
+	videos = Data{
+		folder:     "Videos",
+		extensions: []string{"mp4", "mov", "wmv", "fly", "avi", "mkv", "flv", "mpg", "webm", "oog", "m4p", "m4v", "qt", "swf", "avchd", "f4v", "mpeg-2"},
+	}
+	music = Data{
+		folder:     "Music",
+		extensions: []string{"mp3", "aac", "flac", "alac", "wav", "aiff", "dsd", "pcm", "m4a", "wma"},
+	}
+	documents = Data{
+		folder:     "Documents",
+		extensions: []string{"txt", "doc", "docx", "docx", "odt", "xls", "xlsx", "ppt", "pptx"},
+	}
+	psd = Data{
+		folder:     "Psd",
+		extensions: []string{"psd"},
+	}
+	pdf = Data{
+		folder:     "Pdf",
+		extensions: []string{"pdf"},
+	}
+	archive = Data{
+		folder:     "Archive",
+		extensions: []string{"zip", "rar", "7z", "tar"},
+	}
+	exe = Data{
+		folder:     "Exe",
+		extensions: []string{"exe"},
+	}
+	torrent = Data{
+		folder:     "Torrent",
+		extensions: []string{"torrent"},
+	}
+	allData = []Data{images, videos, music, documents, psd, pdf, archive, exe, torrent}
 )
 
 // Sorted files folder
 const sortedFilesFolder = "Sorted Files"
 
 func sorting() (bool, int) {
-
-	sortingSpinnerCfg := yacspin.Config{
-		Frequency:       100 * time.Millisecond,
-		CharSet:         yacspin.CharSets[59],
-		Suffix:          " Sorting",
-		SuffixAutoColon: true,
-		Message:         "files",
-		StopCharacter:   "✓",
-		StopColors:      []string{"fgGreen"},
-	}
-	spinner, _ := yacspin.New(sortingSpinnerCfg)
-	spinner.Start()
-
+	sortingSpinner := spinner.New("Sorting...")
+	sortingSpinner.Start()
 	var fileToSortExists bool
 	var calcFolders int
 	// Check path
@@ -64,21 +80,14 @@ func sorting() (bool, int) {
 		}
 		// Check files
 		for _, data := range allData {
-			extensions := strings.Split(data.extension, ", ")
-			for _, extension := range extensions {
+			for _, extension := range data.extensions {
 				fileExtname := strings.Trim(filepath.Ext(info.Name()), ".")
-				if !strings.HasPrefix(info.Name(), "sort") && !strings.HasPrefix(info.Name(), sortedFilesFolder) && strings.ToLower(fileExtname) == strings.ToLower(extension) {
+				if !strings.HasPrefix(info.Name(), "sort") && !strings.HasPrefix(info.Name(), sortedFilesFolder) && strings.EqualFold(fileExtname, extension) {
 					// Get modification file time
 					modTimeFolder := strconv.Itoa(info.ModTime().Year())
 					// If folders not exist create
-					if _, err := os.Stat(sortedFilesFolder); os.IsNotExist(err) {
-						os.Mkdir(sortedFilesFolder, 0755)
-					}
-					if _, err := os.Stat(filepath.Join(sortedFilesFolder, modTimeFolder)); os.IsNotExist(err) {
-						os.Mkdir(filepath.Join(sortedFilesFolder, modTimeFolder), 0755)
-					}
 					if _, err := os.Stat(filepath.Join(sortedFilesFolder, modTimeFolder, data.folder)); os.IsNotExist(err) {
-						os.Mkdir(filepath.Join(sortedFilesFolder, modTimeFolder, data.folder), 0755)
+						os.MkdirAll(filepath.Join(sortedFilesFolder, modTimeFolder, data.folder), 0755)
 					}
 					newPath, err := autonamer.Pick(1000, filepath.Join(sortedFilesFolder, modTimeFolder, data.folder, info.Name()))
 					if err != nil {
@@ -87,7 +96,6 @@ func sorting() (bool, int) {
 					// Move file
 					os.Rename(path, newPath)
 					// Update spinner
-					spinner.Message(info.Name())
 					fileToSortExists = true
 				}
 			}
@@ -97,8 +105,7 @@ func sorting() (bool, int) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	// Stop spinner
-	spinner.Stop()
+	sortingSpinner.Success()
 	return fileToSortExists, calcFolders
 }
 
@@ -120,19 +127,8 @@ func scanFolders() {
 	filesExist, folders := sorting()
 	if filesExist {
 		if folders > 0 {
-
-			deleteEmptyFoldersSpinnerCfg := yacspin.Config{
-				Frequency:       100 * time.Millisecond,
-				CharSet:         yacspin.CharSets[59],
-				Suffix:          " Delete empty folders",
-				SuffixAutoColon: true,
-				Message:         "files",
-				StopCharacter:   "✓",
-				StopColors:      []string{"fgGreen"},
-			}
-			spinner, _ := yacspin.New(deleteEmptyFoldersSpinnerCfg)
-			spinner.Start()
-
+			deleteEmptyFoldersSpinner := spinner.New("Delete empty folders...")
+			deleteEmptyFoldersSpinner.Start()
 			for i := 0; i < folders; i++ {
 				err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 					if info.IsDir() {
@@ -144,56 +140,37 @@ func scanFolders() {
 					fmt.Println(err)
 				}
 			}
-
-			time.Sleep(500 * time.Millisecond)
-			spinner.Stop()
-
+			deleteEmptyFoldersSpinner.Success()
 		}
 	}
 }
 
 func zipIt(source, target string, needBaseDir bool) error {
-
-	archiveSpinnerCfg := yacspin.Config{
-		Frequency:       100 * time.Millisecond,
-		CharSet:         yacspin.CharSets[11],
-		Suffix:          " Add files to archive",
-		SuffixAutoColon: true,
-		StopCharacter:   "✓",
-		StopColors:      []string{"fgGreen"},
-	}
-	spinner, _ := yacspin.New(archiveSpinnerCfg)
-	spinner.Start()
-
+	archiveSpinner := spinner.New("Archive files...")
+	archiveSpinner.Start()
 	zipfile, err := os.Create(target)
 	if err != nil {
 		return err
 	}
 	defer zipfile.Close()
-
 	archive := zip.NewWriter(zipfile)
 	defer archive.Close()
-
 	info, err := os.Stat(source)
 	if err != nil {
 		return err
 	}
-
 	var baseDir string
 	if info.IsDir() {
 		baseDir = filepath.Base(source)
 	}
-
 	filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-
 		header, err := zip.FileInfoHeader(info)
 		if err != nil {
 			return err
 		}
-
 		if baseDir != "" {
 			if needBaseDir {
 				header.Name = filepath.Join(baseDir, strings.TrimPrefix(path, source))
@@ -208,22 +185,18 @@ func zipIt(source, target string, needBaseDir bool) error {
 				header.Name = path
 			}
 		}
-
 		if info.IsDir() {
 			header.Name += "/"
 		} else {
 			header.Method = zip.Deflate
 		}
-
 		writer, err := archive.CreateHeader(header)
 		if err != nil {
 			return err
 		}
-
 		if info.IsDir() {
 			return nil
 		}
-
 		file, err := os.Open(path)
 		if err != nil {
 			return err
@@ -232,9 +205,7 @@ func zipIt(source, target string, needBaseDir bool) error {
 		_, err = io.Copy(writer, file)
 		return err
 	})
-
-	spinner.Stop()
-
+	archiveSpinner.Success()
 	return err
 }
 
@@ -256,13 +227,10 @@ func archiveSortedFilesFolder() {
 
 func main() {
 	start := time.Now()
-
 	scanFolders()
 	archiveSortedFilesFolder()
-
 	duration := time.Since(start)
 	fmt.Println("Work time:", duration.Round(time.Millisecond))
-
 	// Uncomment if build for windows
 	// var closeInput string
 	// fmt.Println("Press enter to close!!!")
