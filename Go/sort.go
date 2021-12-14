@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -146,6 +147,13 @@ func scanFolders() {
 }
 
 func zipIt(source, target string, needBaseDir bool) error {
+
+	// Uncomment "controllCpuPriorityWindows()" if build for windows(Windows only)
+	// controllCpuPriorityWindows()
+
+	// Uncomment "controllCpuPriorityLinux()" if build for linux(Linux only)
+	// controllCpuPriorityLinux()
+
 	archiveSpinner := spinner.New("Archive files...")
 	archiveSpinner.Start()
 	zipfile, err := os.Create(target)
@@ -231,8 +239,9 @@ func main() {
 	archiveSortedFilesFolder()
 	duration := time.Since(start)
 	fmt.Println("Work time:", duration.Round(time.Millisecond))
-	// Uncomment if build for windows
-	// var closeInput string
-	// fmt.Println("Press enter to close!!!")
-	// fmt.Scanln(&closeInput)
+	if runtime.GOOS == "windows" {
+		var closeInput string
+		fmt.Println("Press enter to close!!!")
+		fmt.Scanln(&closeInput)
+	}
 }
