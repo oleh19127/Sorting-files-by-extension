@@ -16,63 +16,25 @@ import (
 	"github.com/mochi-co/autonamer"
 )
 
-type Data struct {
-	folder     string
-	extensions []string
-}
-
-var (
-	// Structure
-	images = Data{
-		folder:     "Images",
-		extensions: []string{"png", "jpg", "webp", "svg", "gif", "ico", "jpeg", "bmp", "esp", "jpeg 2000", "heif", "bat", "cgm", "tif", "tiff", "eps", "raw", "cr2", "nef", "orf", "sr2"},
-	}
-	videos = Data{
-		folder:     "Videos",
-		extensions: []string{"mp4", "mov", "wmv", "fly", "avi", "mkv", "flv", "mpg", "webm", "oog", "m4p", "m4v", "qt", "swf", "avchd", "f4v", "mpeg-2"},
-	}
-	music = Data{
-		folder:     "Music",
-		extensions: []string{"mp3", "aac", "flac", "alac", "wav", "aiff", "dsd", "pcm", "m4a", "wma"},
-	}
-	documents = Data{
-		folder:     "Documents",
-		extensions: []string{"txt", "doc", "docx", "docx", "odt", "xls", "xlsx", "ppt", "pptx"},
-	}
-	psd = Data{
-		folder:     "Psd",
-		extensions: []string{"psd"},
-	}
-	pdf = Data{
-		folder:     "Pdf",
-		extensions: []string{"pdf"},
-	}
-	archive = Data{
-		folder:     "Archive",
-		extensions: []string{"zip", "rar", "7z", "tar"},
-	}
-	exe = Data{
-		folder:     "Exe",
-		extensions: []string{"exe"},
-	}
-	torrent = Data{
-		folder:     "Torrent",
-		extensions: []string{"torrent"},
-	}
-	allData = []Data{images, videos, music, documents, psd, pdf, archive, exe, torrent}
+const (
+	sortedFilesFolder = "Sorted Files"
+	otherFilesFolder  = "Other Files"
 )
 
-// Sorted files folder
-const sortedFilesFolder = "Sorted Files"
+func folderExist(folder string) bool {
+	if _, err := os.Stat(folder); !os.IsNotExist(err) {
+		return true
+	}
+	return false
+}
 
-func sorting() (bool, int) {
-	sortingSpinner := spinner.New("Sorting...")
-	sortingSpinner.Start()
+func sortingByExt() (bool, int) {
+	sortingByExt := spinner.New("Sorting files by extensions...")
+	sortingByExt.Start()
 	var fileToSortExists bool
 	var calcFolders int
-	// Check path
 	err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() && info.Name() == sortedFilesFolder {
+		if info.IsDir() && info.Name() == sortedFilesFolder || info.Name() == otherFilesFolder {
 			return filepath.SkipDir
 		}
 		// Calculate folders
@@ -83,20 +45,20 @@ func sorting() (bool, int) {
 		for _, data := range allData {
 			for _, extension := range data.extensions {
 				fileExtname := strings.Trim(filepath.Ext(info.Name()), ".")
-				if !strings.HasPrefix(info.Name(), "sort") && !strings.HasPrefix(info.Name(), sortedFilesFolder) && strings.EqualFold(fileExtname, extension) {
+				if !strings.HasPrefix(info.Name(), "sort") && !strings.HasPrefix(info.Name(), sortedFilesFolder) && strings.EqualFold(fileExtname, extension) && !strings.HasPrefix(info.Name(), otherFilesFolder) {
 					// Get modification file time
 					modTimeFolder := strconv.Itoa(info.ModTime().Year())
 					// If folders not exist create
-					if _, err := os.Stat(filepath.Join(sortedFilesFolder, modTimeFolder, data.folder)); os.IsNotExist(err) {
+					if !folderExist(filepath.Join(sortedFilesFolder, modTimeFolder, data.folder)) {
 						os.MkdirAll(filepath.Join(sortedFilesFolder, modTimeFolder, data.folder), 0755)
 					}
+					// If file already exists, increment filename: name.txt -> name(1).txt
 					newPath, err := autonamer.Pick(1000, filepath.Join(sortedFilesFolder, modTimeFolder, data.folder, info.Name()))
 					if err != nil {
 						fmt.Println(err)
 					}
 					// Move file
 					os.Rename(path, newPath)
-					// Update spinner
 					fileToSortExists = true
 				}
 			}
@@ -106,8 +68,40 @@ func sorting() (bool, int) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	sortingSpinner.Success()
+	sortingByExt.Success()
 	return fileToSortExists, calcFolders
+}
+
+func sortingOthersFiles() bool {
+	sortingOthersFiles := spinner.New("Sorting other files...")
+	sortingOthersFiles.Start()
+	var othersFilesExist bool
+	err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() && info.Name() == sortedFilesFolder || info.Name() == otherFilesFolder {
+			return filepath.SkipDir
+		}
+		fileExtname := strings.Trim(filepath.Ext(info.Name()), ".")
+		if !strings.HasPrefix(info.Name(), "sort") && !strings.HasPrefix(info.Name(), sortedFilesFolder) && !strings.HasPrefix(info.Name(), otherFilesFolder) && !info.IsDir() {
+			// If folders not exist create
+			if !folderExist(filepath.Join(otherFilesFolder, fileExtname)) {
+				os.MkdirAll(filepath.Join(otherFilesFolder, fileExtname), 0755)
+			}
+			// If file already exists, increment filename: name.txt -> name(1).txt
+			newPath, err := autonamer.Pick(1000, filepath.Join(otherFilesFolder, fileExtname, info.Name()))
+			if err != nil {
+				fmt.Println(err)
+			}
+			// Move file
+			os.Rename(path, newPath)
+			othersFilesExist = true
+		}
+		return nil
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+	sortingOthersFiles.Success()
+	return othersFilesExist
 }
 
 func removeDir(path string, info os.FileInfo) {
@@ -125,13 +119,17 @@ func removeDir(path string, info os.FileInfo) {
 }
 
 func scanFolders() {
-	filesExist, folders := sorting()
-	if filesExist {
+	filesByExtensionExist, folders := sortingByExt()
+	otherFilesExist := sortingOthersFiles()
+	if filesByExtensionExist || otherFilesExist {
 		if folders > 0 {
 			deleteEmptyFoldersSpinner := spinner.New("Delete empty folders...")
 			deleteEmptyFoldersSpinner.Start()
 			for i := 0; i < folders; i++ {
 				err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+					if info.IsDir() && info.Name() == sortedFilesFolder || info.Name() == otherFilesFolder {
+						return filepath.SkipDir
+					}
 					if info.IsDir() {
 						removeDir(path, info)
 					}
@@ -147,15 +145,10 @@ func scanFolders() {
 }
 
 func zipIt(source, target string, needBaseDir bool) error {
-
-	// Uncomment "controllCpuPriorityWindows()" if build for windows(Windows only)
-	// controllCpuPriorityWindows()
-
-	// Uncomment "controllCpuPriorityLinux()" if build for linux(Linux only)
-	// controllCpuPriorityLinux()
-
-	archiveSpinner := spinner.New("Archive files...")
-	archiveSpinner.Start()
+	// Uncomment "setCpuPriorityWindows()" if build for windows(Windows only), set priority: below normal, normal, above normal, hight
+	// setCpuPriorityWindows("below normal")
+	// Uncomment "setCpuPriorityLinux()" if build for linux(Linux only), set priority from 20 to 9: very low, from 10 to 1: low, from 0 to -9: normal, from -10 to -20: hight
+	// setCpuPriorityLinux(5)
 	zipfile, err := os.Create(target)
 	if err != nil {
 		return err
@@ -213,22 +206,39 @@ func zipIt(source, target string, needBaseDir bool) error {
 		_, err = io.Copy(writer, file)
 		return err
 	})
-	archiveSpinner.Success()
 	return err
 }
 
 func archiveSortedFilesFolder() {
-	if _, err := os.Stat(sortedFilesFolder); !os.IsNotExist(err) {
+	if folderExist(sortedFilesFolder) || folderExist(otherFilesFolder) {
 		var archiveInput string
-		fmt.Println("Want archive files? (yes/no)")
+		fmt.Println("Want archive files? (yes or y/any key to not)")
 		fmt.Scanln(&archiveInput)
 		if strings.ToLower(archiveInput) == "yes" || strings.ToLower(archiveInput) == "y" {
-			newPath, err := autonamer.Pick(1000, sortedFilesFolder+".zip")
-			if err != nil {
-				fmt.Println(err)
+			if folderExist(sortedFilesFolder) {
+				sortedFilesFolderArchiveSpinner := spinner.New("Archive sorted files...")
+				sortedFilesFolderArchiveSpinner.Start()
+				// If file already exists, increment filename: Sorted Files.zip -> Sorted Files(1).zip
+				newPathForSortedFilesFolder, err := autonamer.Pick(1000, sortedFilesFolder+".zip")
+				if err != nil {
+					fmt.Println(err)
+				}
+				zipIt(sortedFilesFolder, newPathForSortedFilesFolder, false)
+				os.RemoveAll(sortedFilesFolder)
+				sortedFilesFolderArchiveSpinner.Success()
 			}
-			zipIt(sortedFilesFolder, newPath, false)
-			os.RemoveAll(sortedFilesFolder)
+			if folderExist(otherFilesFolder) {
+				otherFilesFolderArchiveSpinner := spinner.New("Archive other files...")
+				otherFilesFolderArchiveSpinner.Start()
+				// If file already exists, increment filename: Other Files.zip -> Other Files(1).zip
+				newPathForOtherFilesFolder, err := autonamer.Pick(1000, otherFilesFolder+".zip")
+				if err != nil {
+					fmt.Println(err)
+				}
+				zipIt(otherFilesFolder, newPathForOtherFilesFolder, false)
+				os.RemoveAll(otherFilesFolder)
+				otherFilesFolderArchiveSpinner.Success()
+			}
 		}
 	}
 }
