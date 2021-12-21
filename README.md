@@ -42,9 +42,13 @@
 
 - All exe files located in **Sorted Files/year created file/Exe/**
 
+- All other files located in **Other Files/extname/**
+
+- All other files no extension located in **Other Files/**
+
 - All empty folders will be deleted
 
-- Possible to archive the sorted files
+- Possible to archive the Sorted Files and Other Files
 
 ## Demo
 
@@ -54,7 +58,7 @@
 
 ## Windows
 
-1. Keep and download file(No virus) <a  href="https://github.com/oleh312/Sorting-files-by-extension/releases/download/v1.5/sort_windows.exe">sort_windows.exe</a>
+1. Keep and download file(No virus) <a  href="https://github.com/oleh312/Sorting-files-by-extension/releases/download/v1.6/sort_windows.exe">sort_windows.exe</a>
 
 2. Place the program file in the folder with the files you want to sort
 
@@ -62,7 +66,7 @@
 
 ## Linux
 
-1. Download file <a  href="https://github.com/oleh312/Sorting-files-by-extension/releases/download/v1.5/sort_linux">sort_linux</a>
+1. Download file <a  href="https://github.com/oleh312/Sorting-files-by-extension/releases/download/v1.6/sort_linux">sort_linux</a>
 
 2. Place the program file in the folder with the files you want to sort
 
@@ -76,14 +80,14 @@
 
 1. Download Golang in <a  href="https://golang.org/">offical site</a>
 
-2. Download or copy file <a  href="https://github.com/oleh312/Sorting-files-by-extension/blob/main/Go/sort.go">sort.go</a>
+2. Download or copy files <a  href="https://github.com/oleh312/Sorting-files-by-extension/blob/main/Go/">files</a>
 
 3. Place the program file in the folder with the files you want to sort
 
 4. Open terminal or cmd in the folder
 
-5. Write in the terminal or cmd: go mod init mod && go mod tidy && go build sort.go
+5. Write in the terminal or cmd: go mod init sorty && go mod tidy && go build sort.go
 
-6. You can remove files: sort.go, go mod, go.sum
+6. You can remove files: sort.go, linux.go, structureOfExtensions.go, windows.go, go mod, go.sum
 
 5. You can move the compiled file where you want and run it on your system
