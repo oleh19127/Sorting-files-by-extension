@@ -48,7 +48,7 @@
 
 - All empty folders will be deleted
 
-- Possible to archive the Sorted Files and Other Files
+- Possible to archive the Sorted Files and Other Files folders
 
 ## Demo
 
@@ -58,15 +58,17 @@
 
 ## Windows
 
-1. Keep and download file(No virus) <a  href="https://github.com/oleh312/Sorting-files-by-extension/releases/download/v1.6/sort_windows.exe">sort_windows.exe</a>
+1. Keep and download file(No virus) <a  href="https://github.com/oleh312/Sorting-files-by-extension/releases/download/v1.7/sort_windows.exe">sort_windows.exe</a>
 
 2. Place the program file in the folder with the files you want to sort
 
 3. Double click on file if not work <a  href="https://www.google.com/search?q=how+to+change+permissions+of+a+file+in+windows&sxsrf=ALeKk03ByQLIy_kPt0X2erLRnJHUqJrZDw%3A1628627435772&ei=6-ESYcvOLs3LrgTmwZ_oBA&oq=how+to+change+permissions+of+a+file+in+windows&gs_lcp=Cgdnd3Mtd2l6EAMyBQgAEMsBMgUIABDLATIGCAAQFhAeMgYIABAWEB4yBggAEBYQHjIGCAAQFhAeMgYIABAWEB4yBggAEBYQHjIGCAAQFhAeMgYIABAWEB46BwgAEEcQsAM6BwgAELADEENKBAhBGABQg9AbWLHZG2D73xtoAnACeACAAbIBiAHMB5IBAzAuOJgBAKABAcgBCcABAQ&sclient=gws-wiz&ved=0ahUKEwiL8J7-pafyAhXNpYsKHebgB00Q4dUDCA4&uact=5">Change file permission </a> or <a  href="https://support.microsoft.com/en-us/windows/turn-off-defender-antivirus-protection-in-windows-security-99e6004f-c54c-8509-773c-a4d776b77960">Off real time protection on windows</a>
 
+4. If you want to sort the files and automatically archive them, open terminal in the folder and write to the terminal: sort_windows.exe archive --all
+
 ## Linux
 
-1. Download file <a  href="https://github.com/oleh312/Sorting-files-by-extension/releases/download/v1.6/sort_linux">sort_linux</a>
+1. Download file <a  href="https://github.com/oleh312/Sorting-files-by-extension/releases/download/v1.7/sort_linux">sort_linux</a>
 
 2. Place the program file in the folder with the files you want to sort
 
@@ -75,6 +77,8 @@
 4. Change file permission: sudo chmod +x "full path to file(sort_linux)"
 
 5. Write in the terminal: ./sort_linux
+
+6. If you want to sort the files and automatically archive them, write to the terminal: ./sort_linux archive --all
 
 ## If not work in you system
 
