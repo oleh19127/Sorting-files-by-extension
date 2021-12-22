@@ -7,10 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/leaanthony/spinner"
 	"github.com/mochi-co/autonamer"
@@ -209,49 +207,54 @@ func zipIt(source, target string, needBaseDir bool) error {
 	return err
 }
 
-func archiveSortedFilesFolder() {
-	if folderExist(sortedFilesFolder) || folderExist(otherFilesFolder) {
-		var archiveInput string
-		fmt.Println("Want archive files? (yes or y/any key to not)")
-		fmt.Scanln(&archiveInput)
-		if strings.ToLower(archiveInput) == "yes" || strings.ToLower(archiveInput) == "y" {
-			if folderExist(sortedFilesFolder) {
-				sortedFilesFolderArchiveSpinner := spinner.New("Archive sorted files...")
-				sortedFilesFolderArchiveSpinner.Start()
-				// If file already exists, increment filename: Sorted Files.zip -> Sorted Files(1).zip
-				newPathForSortedFilesFolder, err := autonamer.Pick(1000, sortedFilesFolder+".zip")
-				if err != nil {
-					fmt.Println(err)
-				}
-				zipIt(sortedFilesFolder, newPathForSortedFilesFolder, false)
-				os.RemoveAll(sortedFilesFolder)
-				sortedFilesFolderArchiveSpinner.Success()
-			}
-			if folderExist(otherFilesFolder) {
-				otherFilesFolderArchiveSpinner := spinner.New("Archive other files...")
-				otherFilesFolderArchiveSpinner.Start()
-				// If file already exists, increment filename: Other Files.zip -> Other Files(1).zip
-				newPathForOtherFilesFolder, err := autonamer.Pick(1000, otherFilesFolder+".zip")
-				if err != nil {
-					fmt.Println(err)
-				}
-				zipIt(otherFilesFolder, newPathForOtherFilesFolder, false)
-				os.RemoveAll(otherFilesFolder)
-				otherFilesFolderArchiveSpinner.Success()
-			}
-		}
-	}
+func getUserInput() string {
+	var archiveInput string
+	fmt.Println("Want archive files? (yes or y/any key to not)")
+	fmt.Scanln(&archiveInput)
+	return archiveInput
 }
 
-func main() {
-	start := time.Now()
-	scanFolders()
-	archiveSortedFilesFolder()
-	duration := time.Since(start)
-	fmt.Println("Work time:", duration.Round(time.Millisecond))
-	if runtime.GOOS == "windows" {
-		var closeInput string
-		fmt.Println("Press enter to close!!!")
-		fmt.Scanln(&closeInput)
+func archiveSortedFilesFolder(exit chan string) {
+	if folderExist(sortedFilesFolder) {
+		sortedFilesFolderArchiveSpinner := spinner.New("Archive sorted files...")
+		sortedFilesFolderArchiveSpinner.Start()
+		// If file already exists, increment filename: Sorted Files.zip -> Sorted Files(1).zip
+		newPathForSortedFilesFolder, err := autonamer.Pick(1000, sortedFilesFolder+".zip")
+		if err != nil {
+			fmt.Println(err)
+		}
+		zipIt(sortedFilesFolder, newPathForSortedFilesFolder, false)
+		os.RemoveAll(sortedFilesFolder)
+		sortedFilesFolderArchiveSpinner.Success()
+	}
+	exit <- ""
+}
+
+func archiveOtherFilesFolder(exit chan string) {
+	if folderExist(otherFilesFolder) {
+		otherFilesFolderArchiveSpinner := spinner.New("Archive other files...")
+		otherFilesFolderArchiveSpinner.Start()
+		// If file already exists, increment filename: Other Files.zip -> Other Files(1).zip
+		newPathForOtherFilesFolder, err := autonamer.Pick(1000, otherFilesFolder+".zip")
+		if err != nil {
+			fmt.Println(err)
+		}
+		zipIt(otherFilesFolder, newPathForOtherFilesFolder, false)
+		os.RemoveAll(otherFilesFolder)
+		otherFilesFolderArchiveSpinner.Success()
+	}
+	exit <- ""
+}
+
+func archiveFolders() {
+	userInput := getUserInput()
+	if strings.ToLower(userInput) == "yes" || strings.ToLower(userInput) == "y" {
+		ch := make(chan string)
+		go archiveSortedFilesFolder(ch)
+		go archiveOtherFilesFolder(ch)
+		s1 := <-ch
+		fmt.Println(s1)
+		s := <-ch
+		fmt.Println(s)
 	}
 }
