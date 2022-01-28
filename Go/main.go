@@ -22,7 +22,7 @@ func main() {
 	} else if len(os.Args) == 3 {
 		switch os.Args[1] {
 		case "archive":
-			scanFolders()
+			removeEmptyFolders()
 			handleGet(archiveCmd, archiveAll)
 		default:
 			fmt.Println("Don't understand input")

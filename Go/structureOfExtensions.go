@@ -6,7 +6,6 @@ type Data struct {
 }
 
 var (
-	// List of extension
 	images = Data{
 		folder:     "Images",
 		extensions: []string{"png", "jpg", "webp", "svg", "gif", "ico", "jpeg", "bmp", "esp", "jpeg 2000", "heif", "bat", "cgm", "tif", "tiff", "eps", "raw", "cr2", "nef", "orf", "sr2"},
@@ -44,4 +43,9 @@ var (
 		extensions: []string{"torrent"},
 	}
 	allData = []Data{images, videos, music, documents, psd, pdf, archive, exe, torrent}
+)
+
+const (
+	sortedFilesFolder = "Sorted Files"
+	otherFilesFolder  = "Other Files"
 )
