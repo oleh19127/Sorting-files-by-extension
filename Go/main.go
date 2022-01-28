@@ -13,7 +13,6 @@ func main() {
 	archiveCmd := flag.NewFlagSet("archive", flag.ExitOnError)
 	archiveAll := archiveCmd.Bool("all", false, "Archive all folders")
 	if len(os.Args) == 1 {
-		scanFolders()
 		archiveFolders()
 		if runtime.GOOS == "windows" {
 			var closeInput string

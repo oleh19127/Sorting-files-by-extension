@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/leaanthony/spinner"
-	"github.com/mochi-co/autonamer"
 )
 
 const (
@@ -19,11 +18,11 @@ const (
 	otherFilesFolder  = "Other Files"
 )
 
-func folderExist(folder string) bool {
-	if _, err := os.Stat(folder); !os.IsNotExist(err) {
-		return true
+func pathExist(path string) bool {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false
 	}
-	return false
+	return true
 }
 
 func sortingByExt() (bool, int) {
@@ -47,14 +46,11 @@ func sortingByExt() (bool, int) {
 					// Get modification file time
 					modTimeFolder := strconv.Itoa(info.ModTime().Year())
 					// If folders not exist create
-					if !folderExist(filepath.Join(sortedFilesFolder, modTimeFolder, data.folder)) {
+					if !pathExist(filepath.Join(sortedFilesFolder, modTimeFolder, data.folder)) {
 						os.MkdirAll(filepath.Join(sortedFilesFolder, modTimeFolder, data.folder), 0755)
 					}
 					// If file already exists, increment filename: name.txt -> name(1).txt
-					newPath, err := autonamer.Pick(1000, filepath.Join(sortedFilesFolder, modTimeFolder, data.folder, info.Name()))
-					if err != nil {
-						fmt.Println(err)
-					}
+					newPath := incrementFileName(filepath.Join(sortedFilesFolder, modTimeFolder, data.folder, info.Name()))
 					// Move file
 					os.Rename(path, newPath)
 					fileToSortExists = true
@@ -66,7 +62,11 @@ func sortingByExt() (bool, int) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	sortingByExt.Success()
+	if fileToSortExists {
+		sortingByExt.Success()
+	} else {
+		sortingByExt.Error("Files to sort by extension not exist")
+	}
 	return fileToSortExists, calcFolders
 }
 
@@ -79,16 +79,13 @@ func sortingOthersFiles() bool {
 			return filepath.SkipDir
 		}
 		fileExtname := strings.Trim(filepath.Ext(info.Name()), ".")
-		if !strings.HasPrefix(info.Name(), "sort") && !strings.HasPrefix(info.Name(), sortedFilesFolder) && !strings.HasPrefix(info.Name(), otherFilesFolder) && !info.IsDir() {
+		if !strings.HasPrefix(info.Name(), "sort") && !strings.HasSuffix(info.Name(), "go") && !strings.HasSuffix(info.Name(), "mod") && !strings.HasSuffix(info.Name(), "sum") && !strings.HasPrefix(info.Name(), sortedFilesFolder) && !strings.HasPrefix(info.Name(), otherFilesFolder) && !info.IsDir() {
 			// If folders not exist create
-			if !folderExist(filepath.Join(otherFilesFolder, fileExtname)) {
+			if !pathExist(filepath.Join(otherFilesFolder, fileExtname)) {
 				os.MkdirAll(filepath.Join(otherFilesFolder, fileExtname), 0755)
 			}
 			// If file already exists, increment filename: name.txt -> name(1).txt
-			newPath, err := autonamer.Pick(1000, filepath.Join(otherFilesFolder, fileExtname, info.Name()))
-			if err != nil {
-				fmt.Println(err)
-			}
+			newPath := incrementFileName(filepath.Join(otherFilesFolder, fileExtname, info.Name()))
 			// Move file
 			os.Rename(path, newPath)
 			othersFilesExist = true
@@ -98,7 +95,11 @@ func sortingOthersFiles() bool {
 	if err != nil {
 		fmt.Println(err)
 	}
-	sortingOthersFiles.Success()
+	if othersFilesExist {
+		sortingOthersFiles.Success()
+	} else {
+		sortingOthersFiles.Error("Other files not exist")
+	}
 	return othersFilesExist
 }
 
@@ -116,13 +117,13 @@ func removeDir(path string, info os.FileInfo) {
 	}
 }
 
-func scanFolders() {
+func scanFolders() (bool, bool) {
 	filesByExtensionExist, folders := sortingByExt()
 	otherFilesExist := sortingOthersFiles()
 	if filesByExtensionExist || otherFilesExist {
+		deleteEmptyFoldersSpinner := spinner.New("Delete empty folders...")
+		deleteEmptyFoldersSpinner.Start()
 		if folders > 0 {
-			deleteEmptyFoldersSpinner := spinner.New("Delete empty folders...")
-			deleteEmptyFoldersSpinner.Start()
 			for i := 0; i < folders; i++ {
 				err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 					if info.IsDir() && info.Name() == sortedFilesFolder || info.Name() == otherFilesFolder {
@@ -138,8 +139,11 @@ func scanFolders() {
 				}
 			}
 			deleteEmptyFoldersSpinner.Success()
+		} else {
+			deleteEmptyFoldersSpinner.Error("Empty folders not exist")
 		}
 	}
+	return filesByExtensionExist, otherFilesExist
 }
 
 func zipIt(source, target string, needBaseDir bool) error {
@@ -215,14 +219,11 @@ func getUserInput() string {
 }
 
 func archiveSortedFilesFolder(exit chan string) {
-	if folderExist(sortedFilesFolder) {
+	if pathExist(sortedFilesFolder) {
 		sortedFilesFolderArchiveSpinner := spinner.New("Archive sorted files...")
 		sortedFilesFolderArchiveSpinner.Start()
 		// If file already exists, increment filename: Sorted Files.zip -> Sorted Files(1).zip
-		newPathForSortedFilesFolder, err := autonamer.Pick(1000, sortedFilesFolder+".zip")
-		if err != nil {
-			fmt.Println(err)
-		}
+		newPathForSortedFilesFolder := incrementFileName(sortedFilesFolder + ".zip")
 		zipIt(sortedFilesFolder, newPathForSortedFilesFolder, false)
 		os.RemoveAll(sortedFilesFolder)
 		sortedFilesFolderArchiveSpinner.Success()
@@ -231,14 +232,11 @@ func archiveSortedFilesFolder(exit chan string) {
 }
 
 func archiveOtherFilesFolder(exit chan string) {
-	if folderExist(otherFilesFolder) {
+	if pathExist(otherFilesFolder) {
 		otherFilesFolderArchiveSpinner := spinner.New("Archive other files...")
 		otherFilesFolderArchiveSpinner.Start()
 		// If file already exists, increment filename: Other Files.zip -> Other Files(1).zip
-		newPathForOtherFilesFolder, err := autonamer.Pick(1000, otherFilesFolder+".zip")
-		if err != nil {
-			fmt.Println(err)
-		}
+		newPathForOtherFilesFolder := incrementFileName(otherFilesFolder + ".zip")
 		zipIt(otherFilesFolder, newPathForOtherFilesFolder, false)
 		os.RemoveAll(otherFilesFolder)
 		otherFilesFolderArchiveSpinner.Success()
@@ -247,14 +245,29 @@ func archiveOtherFilesFolder(exit chan string) {
 }
 
 func archiveFolders() {
-	userInput := getUserInput()
-	if strings.ToLower(userInput) == "yes" || strings.ToLower(userInput) == "y" {
-		ch := make(chan string)
-		go archiveSortedFilesFolder(ch)
-		go archiveOtherFilesFolder(ch)
-		s1 := <-ch
-		fmt.Println(s1)
-		s := <-ch
-		fmt.Println(s)
+	sortByExt, sortOtherFiles := scanFolders()
+	if sortByExt || sortOtherFiles || pathExist(otherFilesFolder) || pathExist(sortedFilesFolder) {
+		userInput := getUserInput()
+		if strings.ToLower(userInput) == "yes" || strings.ToLower(userInput) == "y" {
+			ch := make(chan string)
+			if sortByExt && sortOtherFiles || pathExist(otherFilesFolder) || pathExist(sortedFilesFolder) {
+				go archiveSortedFilesFolder(ch)
+				go archiveOtherFilesFolder(ch)
+				s := <-ch
+				fmt.Println(s)
+				s1 := <-ch
+				fmt.Println(s1)
+			}
+			if sortByExt || pathExist(sortedFilesFolder) {
+				go archiveSortedFilesFolder(ch)
+				s1 := <-ch
+				fmt.Println(s1)
+			}
+			if sortOtherFiles || pathExist(otherFilesFolder) {
+				go archiveOtherFilesFolder(ch)
+				s := <-ch
+				fmt.Println(s)
+			}
+		}
 	}
 }
