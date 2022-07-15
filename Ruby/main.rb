@@ -1,7 +1,5 @@
 require 'fileutils'
 
-require 'filename_increment'
-
 STRUCTURE = {
   images: {
     folder: 'Images',
@@ -44,10 +42,8 @@ STRUCTURE = {
 }
 
 class Sorting
-  attr_reader :threads
-
-  def initialize(data, folder_for_sorting = 'Folder for sorting')
-    @folder_for_sorting = folder_for_sorting
+  def initialize(data)
+    @folder_for_sorting = 'Folder for sorting'
     @threads = []
     @paths = []
     @data = data
@@ -57,15 +53,10 @@ class Sorting
     create_folder(@folder_for_sorting)
     check_files
     @paths.each do |path|
+      new_path = increment_filename(path[:new_path])
       in_thread do
-        new_path = path[:new_path]
-        while File.exist?(new_path)
-
-          new_path = FilenameIncrement.new(new_path).to_s if File.exist?(new_path)
-          puts new_path
-        end
         FileUtils.mv(path[:old_path], new_path)
-        puts "Move #{path[:old_path]} >>> #{path[:new_path]}"
+        puts "Move #{path[:old_path]} >>> #{new_path}"
       end
     end
     @threads.map(&:value)
@@ -73,13 +64,24 @@ class Sorting
 
   private
 
+  def increment_filename(path)
+    _, filename, count, extension = *path.match(/(\A.*?)(?:_#(\d+))?(\.[^.]*)?\Z/)
+    while File.exist?(path)
+      count = (count || '0').to_i + 1
+      path = "#{filename}_##{count}#{extension}"
+      next if File.exist?(path)
+
+      break
+    end
+    path
+  end
+
   def in_thread(&block)
     @threads << Thread.new(&block)
   end
 
   def create_folder(folder)
-    pwd = FileUtils.getwd
-    folder = File.join(pwd, folder)
+    folder = File.join(FileUtils.getwd, folder)
     unless Dir.exist?(folder)
       FileUtils.mkdir_p(folder)
       puts "Create folder: #{folder}"
@@ -87,8 +89,7 @@ class Sorting
   end
 
   def get_all_files_in_folder(folder)
-    pwd = FileUtils.getwd
-    folder = File.join(pwd, folder)
+    folder = File.join(FileUtils.getwd, folder)
     Dir.glob("#{folder}/**/*")
   end
 
