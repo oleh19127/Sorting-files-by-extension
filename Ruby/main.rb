@@ -60,6 +60,7 @@ class Sorting
       end
     end
     @threads.map(&:value)
+    remove_all_empty_folders(@folder_for_sorting)
   end
 
   private
@@ -91,6 +92,16 @@ class Sorting
   def get_all_files_in_folder(folder)
     folder = File.join(FileUtils.getwd, folder)
     Dir.glob("#{folder}/**/*")
+  end
+
+  def remove_all_empty_folders(folder)
+    all_files = get_all_files_in_folder(folder)
+    all_files.each do |file|
+      if File.directory?(file) && Dir.empty?(file)
+        FileUtils.remove_dir(file)
+        puts "Remove directory: #{file}"
+      end
+    end
   end
 
   def check_files
