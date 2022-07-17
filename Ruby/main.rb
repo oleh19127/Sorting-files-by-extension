@@ -42,6 +42,8 @@ STRUCTURE = {
 }
 
 class Sorting
+  attr_accessor :data
+
   def initialize(data)
     @folder_for_sorting = 'Folder for sorting'
     @threads = []
@@ -52,6 +54,7 @@ class Sorting
   def by_extension
     create_folder(@folder_for_sorting)
     check_files
+
     @paths.each do |path|
       new_path = increment_filename(path[:new_path])
       in_thread do
@@ -96,7 +99,7 @@ class Sorting
 
   def remove_all_empty_folders(folder)
     all_files = get_all_files_in_folder(folder)
-    all_files.each do |file|
+    all_files.reverse.each do |file|
       if File.directory?(file) && Dir.empty?(file)
         FileUtils.remove_dir(file)
         puts "Remove directory: #{file}"
