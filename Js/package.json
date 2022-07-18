@@ -1,0 +1,25 @@
+{
+  "name": "sorting-files-by-extension",
+  "version": "1.0.0",
+  "description": "Sort files by extensions",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oleh312/Sorting-files-by-extension.git"
+  },
+  "keywords": [],
+  "author": "https://github.com/oleh312",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/oleh312/Sorting-files-by-extension/issues"
+  },
+  "homepage": "https://github.com/oleh312/Sorting-files-by-extension#readme",
+  "dependencies": {
+    "chalk": "^5.0.1",
+    "globby": "^13.1.2"
+  }
+}
